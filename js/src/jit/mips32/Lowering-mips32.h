@@ -42,6 +42,7 @@ class LIRGeneratorMIPS : public LIRGeneratorMIPSShared
     void visitUnbox(MUnbox* unbox);
     void visitReturn(MReturn* ret);
     void visitRandom(MRandom* ins);
+    void visitExtendInt32ToInt64(MExtendInt32ToInt64* ins);
 };
 
 typedef LIRGeneratorMIPS LIRGeneratorSpecific;
