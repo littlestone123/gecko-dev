@@ -182,6 +182,53 @@ MacroAssembler::sub64(Imm64 imm, Register64 dest)
 }
 
 void
+MacroAssembler::mul64(Imm64 imm, const Register64& dest, const Register temp)
+{
+    // LOW32  = LOW(LOW(dest) * LOW(imm));
+    // HIGH32 = LOW(HIGH(dest) * LOW(imm)) [multiply imm into upper bits]
+    //        + LOW(LOW(dest) * HIGH(imm)) [multiply dest into upper bits]
+    //        + HIGH(LOW(dest) * LOW(imm)) [carry]
+
+    // HIGH(dest) = LOW(HIGH(dest) * LOW(imm));
+    MOZ_ASSERT(temp != dest.high && temp != dest.low);
+
+    ma_mul(dest.high, dest.high, Imm32(imm.value & LOW_32_MASK)); // (2)
+    ma_mul(temp, dest.low, Imm32((imm.value >> 32) & LOW_32_MASK)); // (3)
+    as_addu(temp, dest.high, temp);
+    ma_li(dest.high, Imm32(imm.value & LOW_32_MASK));
+    as_multu(dest.low, dest.high); //(4)+(1)
+    as_mfhi(dest.high);
+    as_mflo(dest.low);
+    as_addu(dest.high, dest.high, temp);
+
+}
+
+
+void
+MacroAssembler::mul64(const Register64& src, const Register64& dest, const Register temp)
+{
+    // LOW32  = LOW(LOW(dest) * LOW(imm));
+    // HIGH32 = LOW(HIGH(dest) * LOW(imm)) [multiply imm into upper bits]
+    //        + LOW(LOW(dest) * HIGH(imm)) [multiply dest into upper bits]
+    //        + HIGH(LOW(dest) * LOW(imm)) [carry]
+
+    // HIGH(dest) = LOW(HIGH(dest) * LOW(imm));
+    MOZ_ASSERT(dest != src);
+    MOZ_ASSERT(dest.low != src.high && dest.high != src.low);
+
+    as_multu(dest.high, src.low); // (2)
+    as_mflo(dest.high);
+    as_multu(dest.low, src.high); // (3)
+    as_mflo(temp);
+    as_addu(temp, dest.high, temp);
+    as_multu(dest.low, src.low); // (4)+(1)
+    as_mfhi(dest.high);
+    as_mflo(dest.low);
+    as_addu(dest.high, dest.high, temp);
+
+}
+
+void
 MacroAssembler::mul64(Imm64 imm, const Register64& dest)
 {
     // LOW32  = LOW(LOW(dest) * LOW(imm));
@@ -224,6 +271,16 @@ MacroAssembler::mul64(Imm64 imm, const Register64& dest)
         // LOW(dest) = tmp;
         ma_move(dest.low, SecondScratchReg);
     }
+}
+
+void
+MacroAssembler::neg64(Register64 reg)
+{
+    ma_negu(reg.low, reg.low);
+    ma_li(ScratchRegister, Imm32(1));
+    as_sltu(ScratchRegister, reg.low, ScratchRegister);
+    as_addu(reg.high, reg.high, ScratchRegister);
+    ma_negu(reg.high, reg.high);
 }
 
 void
