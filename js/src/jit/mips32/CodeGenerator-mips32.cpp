@@ -566,3 +566,48 @@ CodeGeneratorMIPS::visitCompareI64AndBranch(LCompareI64AndBranch* lir)
         masm.branch64(condition, lhsRegs, rhsRegs, trueLabel, falseLabel);
     }
 }
+
+void
+CodeGeneratorMIPS::visitShiftI64(LShiftI64* lir)
+{
+    const LInt64Allocation lhs = lir->getInt64Operand(LShiftI64::Lhs);
+    LAllocation* rhs = lir->getOperand(LShiftI64::Rhs);
+    Register64 output = ToOutRegister64(lir);
+
+    masm.move64(ToRegister64(lhs), output);
+
+    if (rhs->isConstant()) {
+        int32_t shift = int32_t(rhs->toConstant()->toInt64() & 0x3F);
+        switch (lir->bitop()) {
+          case JSOP_LSH:
+            if (shift)
+                masm.lshift64(Imm32(shift), output);
+            break;
+          case JSOP_RSH:
+            if (shift)
+                masm.rshift64Arithmetic(Imm32(shift), output);
+            break;
+          case JSOP_URSH:
+            if (shift)
+                masm.rshift64(Imm32(shift), output);
+            break;
+          default:
+            MOZ_CRASH("Unexpected shift op");
+        }
+        return;
+    }
+
+    switch (lir->bitop()) {
+      case JSOP_LSH:
+        masm.lshift64(ToRegister(rhs), output);
+        break;
+      case JSOP_RSH:
+        masm.rshift64Arithmetic(ToRegister(rhs), output);
+        break;
+      case JSOP_URSH:
+        masm.rshift64(ToRegister(rhs), output);
+        break;
+      default:
+        MOZ_CRASH("Unexpected shift op");
+    }
+}

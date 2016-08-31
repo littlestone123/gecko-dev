@@ -323,10 +323,33 @@ MacroAssembler::lshift64(Imm32 imm, Register64 dest)
 {
     MOZ_ASSERT(0 <= imm.value && imm.value < 64);
     ScratchRegisterScope scratch(*this);
-    as_sll(dest.high, dest.high, imm.value);
-    as_srl(scratch, dest.low, 32 - imm.value);
-    as_or(dest.high, dest.high, scratch);
-    as_sll(dest.low, dest.low, imm.value);
+    if (imm.value == 0) {
+        return;
+    } else if (imm.value < 32) {
+        as_sll(dest.high, dest.high, imm.value);
+        as_srl(scratch, dest.low, 32 - imm.value);
+        as_or(dest.high, dest.high, scratch);
+        as_sll(dest.low, dest.low, imm.value);
+    } else {
+        as_sll(dest.high, dest.low, imm.value-32);
+        move32(Imm32(0), dest.low);
+    }
+}
+
+void
+MacroAssembler::lshift64(Register unmaskedShift, Register64 dest)
+{
+    ScratchRegisterScope shift(*this);
+    ma_and(shift, unmaskedShift, Imm32(0x3f));
+    ma_sll(dest.high, dest.high, shift);
+    ma_subu(shift, shift, Imm32(32));
+    ma_sll(ScratchRegister, dest.low, shift);
+    as_or(dest.high, dest.high, ScratchRegister);
+    ma_negu(shift, shift);
+    ma_srl(ScratchRegister, dest.low, shift);
+    as_or(dest.high, dest.high, ScratchRegister);
+    ma_and(shift, unmaskedShift, Imm32(0x3f));
+    ma_sll(dest.low, dest.low, shift);
 }
 
 void
@@ -344,16 +367,81 @@ MacroAssembler::rshiftPtrArithmetic(Imm32 imm, Register dest)
 }
 
 void
+MacroAssembler::rshift64Arithmetic(Imm32 imm, Register64 dest)
+{
+    MOZ_ASSERT(0 <= imm.value && imm.value < 64);
+    ScratchRegisterScope scratch(*this);
+    if (imm.value < 32) {
+        as_srl(dest.low, dest.low, imm.value);
+        as_sll(scratch, dest.high, 32 - imm.value);
+        as_or(dest.low, dest.low, scratch);
+        as_sra(dest.high, dest.high, imm.value);
+    } else if (imm.value == 32) {
+        ma_move(dest.low, dest.high);
+        as_sra(dest.high, dest.high, 31);
+    } else {
+        as_sra(dest.low, dest.high, imm.value - 32);
+        as_sra(dest.high, dest.high, 31);
+    }
+}
+
+void
+MacroAssembler::rshift64Arithmetic(Register unmaskedShift, Register64 dest)
+{
+    Label done;
+
+    ScratchRegisterScope shift(*this);
+    ma_and(shift, unmaskedShift, Imm32(0x3f));
+    ma_srl(dest.low, dest.low, shift);
+    ma_subu(shift, shift, Imm32(32));
+    ma_sll(ScratchRegister, dest.high, shift);
+    as_or(dest.low, dest.low, ScratchRegister);
+    ma_negu(shift, shift);
+    ma_b(&done);
+
+    ma_sra(ScratchRegister, dest.high, shift);
+    as_or(dest.low, dest.low, ScratchRegister);
+
+    bind(&done);
+    ma_and(shift, unmaskedShift, Imm32(0x3f));
+    ma_sra(dest.high, dest.high, shift);
+}
+
+
+void
 MacroAssembler::rshift64(Imm32 imm, Register64 dest)
 {
     MOZ_ASSERT(0 <= imm.value && imm.value < 64);
     ScratchRegisterScope scratch(*this);
-    as_srl(dest.low, dest.low, imm.value);
-    as_sll(scratch, dest.high, 32 - imm.value);
-    as_or(dest.low, dest.low, scratch);
-    as_srl(dest.high, dest.high, imm.value);
+    if (imm.value < 32) {
+        as_srl(dest.low, dest.low, imm.value);
+        as_sll(scratch, dest.high, 32 - imm.value);
+        as_or(dest.low, dest.low, scratch);
+        as_srl(dest.high, dest.high, imm.value);
+    } else if (imm.value == 32) {
+        ma_move(dest.low, dest.high);
+        move32(Imm32(0), dest.high);
+    } else {
+        ma_srl(dest.low, dest.high, Imm32(imm.value - 32));
+        move32(Imm32(0), dest.high);
+    }
 }
 
+void
+MacroAssembler::rshift64(Register unmaskedShift, Register64 dest)
+{
+    ScratchRegisterScope shift(*this);
+    ma_and(shift, unmaskedShift, Imm32(0x3f));
+    ma_srl(dest.low, dest.low, shift);
+    ma_subu(shift, shift, Imm32(32));
+    ma_srl(ScratchRegister, dest.high, shift);
+    as_or(dest.low, dest.low, ScratchRegister);
+    ma_negu(shift, shift);
+    ma_sll(ScratchRegister, dest.high, shift);
+    as_or(dest.low, dest.low, ScratchRegister);
+    ma_and(shift, unmaskedShift, Imm32(0x3f));
+    ma_srl(dest.high, dest.high, shift);
+}
 // ===============================================================
 // Branch functions
 
