@@ -32,12 +32,14 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     }
 
     void emitTableSwitchDispatch(MTableSwitch* mir, Register index, Register base);
-
+ 
   public:
     void visitCompareB(LCompareB* lir);
     void visitCompareBAndBranch(LCompareBAndBranch* lir);
     void visitCompareBitwise(LCompareBitwise* lir);
     void visitCompareBitwiseAndBranch(LCompareBitwiseAndBranch* lir);
+
+    void visitWrapInt64ToInt32(LWrapInt64ToInt32* lir);
 
     // Out of line visitors.
     void visitOutOfLineBailout(OutOfLineBailout* ool);
