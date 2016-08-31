@@ -255,3 +255,42 @@ LIRGeneratorMIPS::visitExtendInt32ToInt64(MExtendInt32ToInt64* ins)
 
     lir->setDef(0, def);
 }
+
+void
+LIRGeneratorMIPS::lowerDivI64(MDiv* div)
+{
+    if (div->isUnsigned()) {
+        lowerUDivI64(div);
+        return;
+    }
+    LDivOrModI64* lir = new(alloc()) LDivOrModI64(useInt64RegisterAtStart(div->lhs()), useInt64RegisterAtStart(div->rhs()));
+
+    defineReturn(lir, div);
+}
+
+void
+LIRGeneratorMIPS::lowerModI64(MMod* mod)
+{
+    if (mod->isUnsigned()) {
+        lowerUModI64(mod);
+        return;
+    }
+
+    LDivOrModI64* lir = new(alloc()) LDivOrModI64(useInt64RegisterAtStart(mod->lhs()), useInt64RegisterAtStart(mod->rhs()));
+
+    defineReturn(lir, mod);
+}
+
+void
+LIRGeneratorMIPS::lowerUDivI64(MDiv* div)
+{
+    LUDivOrModI64* lir = new(alloc()) LUDivOrModI64(useInt64RegisterAtStart(div->lhs()), useInt64RegisterAtStart(div->rhs()));
+    defineReturn(lir, div);
+}
+
+void
+LIRGeneratorMIPS::lowerUModI64(MMod* mod)
+{
+    LUDivOrModI64* lir = new(alloc()) LUDivOrModI64(useInt64RegisterAtStart(mod->lhs()), useInt64RegisterAtStart(mod->rhs()));
+    defineReturn(lir, mod);
+}
