@@ -43,6 +43,7 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitExtendInt32ToInt64(LExtendInt32ToInt64* lir);
     void visitAddI64(LAddI64* lir);
     void visitSubI64(LSubI64* lir);
+    void visitMulI64(LMulI64* lir);
 
 
     // Out of line visitors.
