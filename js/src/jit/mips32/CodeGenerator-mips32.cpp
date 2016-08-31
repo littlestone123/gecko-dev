@@ -338,3 +338,37 @@ CodeGeneratorMIPS::visitExtendInt32ToInt64(LExtendInt32ToInt64* lir)
     else
         masm.ma_sra(output.high, output.low, Imm32(31));
 }
+
+void
+CodeGeneratorMIPS::visitAddI64(LAddI64* lir)
+{
+    const LInt64Allocation lhs = lir->getInt64Operand(LAddI64::Lhs);
+    const LInt64Allocation rhs = lir->getInt64Operand(LAddI64::Rhs);
+    Register64 output = ToOutRegister64(lir);
+
+    masm.move64(ToRegister64(lhs), output);
+
+    if (IsConstant(rhs)) {
+        masm.add64(Imm64(ToInt64(rhs)), output);
+        return;
+    }
+
+    masm.add64(ToOperandOrRegister64(rhs), output);
+}
+
+void
+CodeGeneratorMIPS::visitSubI64(LSubI64* lir)
+{
+    const LInt64Allocation lhs = lir->getInt64Operand(LSubI64::Lhs);
+    const LInt64Allocation rhs = lir->getInt64Operand(LSubI64::Rhs);
+    Register64 output = ToOutRegister64(lir);
+
+    masm.move64(ToRegister64(lhs), output);
+
+    if (IsConstant(rhs)) {
+        masm.sub64(Imm64(ToInt64(rhs)), output);
+        return;
+    }
+
+    masm.sub64(ToOperandOrRegister64(rhs), output);
+}
