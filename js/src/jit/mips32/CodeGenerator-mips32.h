@@ -47,6 +47,7 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     ValueOperand ToOutValue(LInstruction* ins);
     ValueOperand ToTempValue(LInstruction* ins, size_t pos);
 
+    Register64 ToOperandOrRegister64(const LInt64Allocation input);
     // Functions for LTestVAndBranch.
     Register splitTagForTest(const ValueOperand& value);
 
