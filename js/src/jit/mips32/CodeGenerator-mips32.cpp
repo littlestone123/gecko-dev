@@ -871,3 +871,63 @@ CodeGeneratorMIPS::visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins)
     masm.store32(input.low, Address(GlobalReg, addr + INT64LOW_OFFSET));
     masm.store32(input.high, Address(GlobalReg, addr + INT64HIGH_OFFSET));
 }
+
+void
+CodeGeneratorMIPS::visitWasmLoadI64(LWasmLoadI64* lir)
+{
+    const MWasmLoad* mir = lir->mir();
+    Register64 output = ToOutRegister64(lir);
+
+    MOZ_ASSERT(!mir->barrierBefore() && !mir->barrierAfter(), "atomics NYI");
+
+    uint32_t offset = mir->offset();
+    if (offset > INT32_MAX) {
+        masm.breakpoint();
+        return;
+    }
+
+    Register ptr = ToRegister(lir->ptr());
+
+    if (offset) {
+        Register ptrPlusOffset = ToRegister(lir->ptrCopy());
+        masm.addPtr(Imm32(offset), ptrPlusOffset);
+        ptr = ptrPlusOffset;
+    } else {
+        MOZ_ASSERT(lir->ptrCopy()->isBogusTemp());
+    }
+
+    MOZ_ASSERT(INT64LOW_OFFSET == 0);
+    masm.ma_load(output.low, BaseIndex(HeapReg, ptr, TimesOne), SizeWord);
+    masm.ma_addu(ptr, Imm32(INT64HIGH_OFFSET));
+    masm.ma_load(output.high, BaseIndex(HeapReg, ptr, TimesOne), SizeWord);
+}
+
+void
+CodeGeneratorMIPS::visitWasmStoreI64(LWasmStoreI64* lir)
+{
+    const MWasmStore* mir = lir->mir();
+    Register64 value = ToRegister64(lir->getInt64Operand(lir->ValueIndex));
+
+    MOZ_ASSERT(!mir->barrierBefore() && !mir->barrierAfter(), "atomics NYI");
+
+    uint32_t offset = mir->offset();
+    if (offset > INT32_MAX) {
+        masm.breakpoint();
+        return;
+    }
+
+    Register ptr = ToRegister(lir->ptr());
+
+    if (offset) {
+        Register ptrPlusOffset = ToRegister(lir->ptrCopy());
+        masm.addPtr(Imm32(offset), ptrPlusOffset);
+        ptr = ptrPlusOffset;
+    } else {
+        MOZ_ASSERT(lir->ptrCopy()->isBogusTemp());
+    }
+
+    MOZ_ASSERT(INT64LOW_OFFSET == 0);
+    masm.ma_store(value.low, BaseIndex(HeapReg, ptr, TimesOne), SizeWord);
+    masm.ma_addu(ptr, Imm32(INT64HIGH_OFFSET));
+    masm.ma_store(value.high, BaseIndex(HeapReg, ptr, TimesOne), SizeWord);
+}
