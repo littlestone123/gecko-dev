@@ -327,3 +327,12 @@ LIRGeneratorMIPS::visitAsmSelect(MAsmSelect* ins)
     auto* lir = new(alloc()) LAsmSelect(useRegisterAtStart(ins->trueExpr()), useRegister(ins->falseExpr()), useRegister(ins->condExpr()));
     defineReuseInput(lir, ins, LAsmSelect::TrueExprIndex);
 }
+
+void
+LIRGeneratorMIPS::visitWasmTruncateToInt64(MWasmTruncateToInt64* ins)
+{
+    MDefinition* opd = ins->input();
+    MOZ_ASSERT(opd->type() == MIRType::Double || opd->type() == MIRType::Float32);
+
+    defineReturn(new(alloc()) LWasmTruncateToInt64(useRegisterAtStart(opd)), ins);
+}
