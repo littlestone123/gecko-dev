@@ -90,6 +90,8 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitWasmLoadGlobalVarI64(LWasmLoadGlobalVarI64* ins);
     void visitWasmStoreGlobalVarI64(LWasmStoreGlobalVarI64* ins);
 
+    void visitWasmLoadI64(LWasmLoadI64* ins);
+    void visitWasmStoreI64(LWasmStoreI64* ins);
 };
 
 typedef CodeGeneratorMIPS CodeGeneratorSpecific;
