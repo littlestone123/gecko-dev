@@ -56,6 +56,7 @@ class LIRGeneratorMIPS : public LIRGeneratorMIPSShared
     void visitRandom(MRandom* ins);
     void visitExtendInt32ToInt64(MExtendInt32ToInt64* ins);
     void visitAsmSelect(MAsmSelect* ins);
+    void visitWasmTruncateToInt64(MWasmTruncateToInt64* ins);
 };
 
 typedef LIRGeneratorMIPS LIRGeneratorSpecific;

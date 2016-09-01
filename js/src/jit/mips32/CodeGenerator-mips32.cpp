@@ -774,3 +774,37 @@ CodeGeneratorMIPS::visitNotI64(LNotI64* lir)
 
     masm.cmp32Set(Assembler::Equal, output, Imm32(0), output);
 }
+
+void
+CodeGeneratorMIPS::visitWasmTruncateToInt64(LWasmTruncateToInt64* lir)
+{
+    Label done, bailout;
+    FloatRegister input = ToFloatRegister(lir->input());
+    Register64 output = ToOutRegister64(lir);
+
+    MWasmTruncateToInt64* mir = lir->mir();
+    MIRType fromType = mir->input()->type();
+
+    auto* ool = new(alloc()) OutOfLineWasmTruncateCheck(mir, input);
+    addOutOfLineCode(ool, mir);
+
+    //masm.convertFloat32ToDouble(input, ScratchDoubleReg);
+
+    if (fromType == MIRType::Float32) {
+        masm.convertFloat32ToDouble(input, ScratchDoubleReg);
+    }
+
+    masm.setupUnalignedABICall(output.high);
+    masm.passABIArg(ScratchDoubleReg, MoveOp::DOUBLE);
+    if (lir->mir()->isUnsigned())
+        masm.callWithABI(wasm::SymbolicAddress::TruncateDoubleToUint64);
+    else
+        masm.callWithABI(wasm::SymbolicAddress::TruncateDoubleToInt64);
+
+    masm.ma_b(output.high, Imm32(0x80000000), ool->entry(), Assembler::NotEqual);
+    masm.ma_b(output.low, Imm32(0x00000000), ool->entry(), Assembler::NotEqual);
+
+    masm.bind(ool->rejoin());
+
+    MOZ_ASSERT(ReturnReg64 == output);
+}
