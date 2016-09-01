@@ -58,6 +58,7 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitPopcntI64(LPopcntI64* ins);
     void visitClzI64(LClzI64* ins);
     void visitCtzI64(LCtzI64* ins);
+    void visitNotI64(LNotI64* ins);
 
 
     // Out of line visitors.
