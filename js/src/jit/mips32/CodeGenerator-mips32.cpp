@@ -710,3 +710,29 @@ CodeGeneratorMIPS::visitAsmSelectI64(LAsmSelectI64* lir)
     }
 
 }
+
+void
+CodeGeneratorMIPS::visitAsmReinterpretFromI64(LAsmReinterpretFromI64* lir)
+{
+    MOZ_ASSERT(lir->mir()->type() == MIRType::Double);
+    MOZ_ASSERT(lir->mir()->input()->type() == MIRType::Int64);
+    Register64 input = ToRegister64(lir->getInt64Operand(0));
+    FloatRegister output = ToFloatRegister(lir->output());
+
+    //masm.as_mtc1(input.low, output.asSingle());
+    masm.moveToDoubleLo(input.low, output);
+    masm.moveToDoubleHi(input.high, output);
+}
+
+void
+CodeGeneratorMIPS::visitAsmReinterpretToI64(LAsmReinterpretToI64* lir)
+{
+    MOZ_ASSERT(lir->mir()->type() == MIRType::Int64);
+    MOZ_ASSERT(lir->mir()->input()->type() == MIRType::Double);
+    FloatRegister input = ToFloatRegister(lir->getOperand(0));
+    Register64 output = ToOutRegister64(lir);
+
+    //masm.as_mfc1(output.low, input.asSingle());
+    masm.moveFromDoubleLo(input, output.low);
+    masm.moveFromDoubleHi(input, output.high);
+}
