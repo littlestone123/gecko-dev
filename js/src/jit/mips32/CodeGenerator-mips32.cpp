@@ -838,3 +838,12 @@ CodeGeneratorMIPS::visitInt64ToFloatingPoint(LInt64ToFloatingPoint* lir)
          masm.convertDoubleToFloat32(ReturnDoubleReg, output);
     }
 }
+
+void
+CodeGeneratorMIPS::visitTestI64AndBranch(LTestI64AndBranch* lir)
+{
+    Register64 input = ToRegister64(lir->getInt64Operand(0));
+
+    branchToBlock(input.high, Imm32(0), lir->ifTrue(), Assembler::NonZero);
+    emitBranch(input.low, Imm32(0), Assembler::NonZero, lir->ifTrue(), lir->ifFalse());
+}
