@@ -461,6 +461,181 @@ MacroAssembler::rshift64(Register unmaskedShift, Register64 dest)
     ma_and(shift, unmaskedShift, Imm32(0x3f));
     ma_srl(dest.high, dest.high, shift);
 }
+
+// ===============================================================
+// // Rotate functions
+void
+MacroAssembler::rotateLeft64(Imm32 count, Register64 input, Register64 dest, Register temp)
+{
+    MOZ_ASSERT(temp == InvalidReg);
+    MOZ_ASSERT(input.low != dest.high && input.high != dest.low);
+
+    int32_t amount = count.value & 0x3f;
+    if (amount > 32) {
+        rotateRight64(Imm32(64 - amount), input, dest, temp);
+    } else {
+        ScratchRegisterScope scratch(*this);
+        if (amount == 0) {
+            ma_move(dest.low, input.low);
+            ma_move(dest.high, input.high);
+
+        } else if (amount == 32) {
+            ma_move(scratch, input.low);
+            ma_move(dest.low, input.high);
+            ma_move(dest.high, scratch);
+
+        } else {
+            MOZ_ASSERT(0 < amount && amount < 32);
+            ma_move(scratch, dest.high);
+            ma_sll(dest.high, dest.high, Imm32(amount));
+            ma_srl(ScratchRegister, dest.low, Imm32(32 - amount));
+            as_or(dest.high, dest.high, ScratchRegister);
+            ma_sll(dest.low, dest.low, Imm32(amount));
+            ma_srl(ScratchRegister, scratch, Imm32(32 - amount));
+            as_or(dest.low, dest.low, ScratchRegister);
+
+        }
+    }
+}
+
+void
+MacroAssembler::rotateLeft64(Register shift, Register64 src, Register64 dest, Register temp)
+{
+    MOZ_ASSERT(shift != temp);
+    MOZ_ASSERT(src == dest);
+    MOZ_ASSERT(temp != src.low && temp != src.high);
+    MOZ_ASSERT(shift != src.low && shift != src.high);
+    MOZ_ASSERT(temp != InvalidReg);
+
+    ScratchRegisterScope shift_value(*this);
+    Label high, done;
+
+    ma_move(temp, src.high);
+    ma_and(shift_value, shift, Imm32(0x3f));
+    ma_b(shift_value, Imm32(32), &high, GreaterThanOrEqual);
+
+    // high = high << shift | low >> 32 - shift
+    // low = low << shift | high >> 32 - shift
+    ma_sll(dest.high, src.high, shift_value);
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_srl(SecondScratchReg, src.low, shift_value);
+    as_or(dest.high, dest.high, SecondScratchReg);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_sll(dest.low, src.low, shift_value);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_srl(SecondScratchReg, temp, shift_value);
+    as_or(dest.low, dest.low, SecondScratchReg);
+
+    ma_b(&done);
+
+    // A 32 - 64 shift is a 0 - 32 shift in the other direction.
+    bind(&high);
+    ma_subu(shift_value, shift_value, Imm32(64));
+    ma_srl(dest.high, src.high, shift_value);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_sll(SecondScratchReg, src.low, shift_value);
+    as_or(dest.high, dest.high, SecondScratchReg);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_srl(dest.low, src.low, shift_value);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_sll(SecondScratchReg, temp, shift_value);
+    as_or(dest.low, dest.low, SecondScratchReg);
+
+    bind(&done);
+}
+
+
+void
+MacroAssembler::rotateRight64(Imm32 count, Register64 input, Register64 dest, Register temp)
+{
+    MOZ_ASSERT(temp == InvalidReg);
+    MOZ_ASSERT(input.low != dest.high && input.high != dest.low);
+
+    int32_t amount = count.value & 0x3f;
+    if (amount > 32) {
+        rotateLeft64(Imm32(64 - amount), input, dest, temp);
+    } else {
+        ScratchRegisterScope scratch(*this);
+        if (amount == 0) {
+            ma_move(dest.low, input.low);
+            ma_move(dest.high, input.high);
+
+        } else if (amount == 32) {
+            ma_move(scratch, input.low);
+            ma_move(dest.low, input.high);
+            ma_move(dest.high, scratch);
+
+        } else {
+            MOZ_ASSERT(0 < amount && amount < 32);
+            ma_move(scratch, dest.high);
+            ma_srl(dest.high, dest.high, Imm32(amount));
+            ma_sll(ScratchRegister, dest.low, Imm32(32 - amount));
+            as_or(dest.high, dest.high, ScratchRegister);
+            ma_srl(dest.low, dest.low, Imm32(amount));
+            ma_sll(ScratchRegister, scratch, Imm32(32 - amount));
+            as_or(dest.low, dest.low, ScratchRegister);
+
+        }
+    }
+}
+
+void
+MacroAssembler::rotateRight64(Register shift, Register64 src, Register64 dest, Register temp)
+{
+    MOZ_ASSERT(shift != temp);
+    MOZ_ASSERT(src == dest);
+    MOZ_ASSERT(temp != src.low && temp != src.high);
+    MOZ_ASSERT(shift != src.low && shift != src.high);
+    MOZ_ASSERT(temp != InvalidReg);
+
+    ScratchRegisterScope shift_value(*this);
+    Label high, done;
+
+    ma_move(temp, src.high);
+    ma_and(shift_value, shift, Imm32(0x3f));
+    ma_b(shift_value, Imm32(32), &high, GreaterThanOrEqual);
+
+    // high = high >> shift | low << 32 - shift
+    // low = low >> shift | high << 32 - shift
+    ma_srl(dest.high, src.high, shift_value);
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_sll(SecondScratchReg, src.low, shift_value);
+    as_or(dest.high, dest.high, SecondScratchReg);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_srl(dest.low, src.low, shift_value);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_sll(SecondScratchReg, temp, shift_value);
+    as_or(dest.low, dest.low, SecondScratchReg);
+
+    ma_b(&done);
+
+    // A 32 - 64 shift is a 0 - 32 shift in the other direction.
+    bind(&high);
+    ma_subu(shift_value, shift_value, Imm32(64));
+    ma_sll(dest.high, src.high, shift_value);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_srl(SecondScratchReg, src.low, shift_value);
+    as_or(dest.high, dest.high, SecondScratchReg);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_sll(dest.low, src.low, shift_value);
+
+    ma_subu(shift_value, shift_value, Imm32(32));
+    ma_srl(SecondScratchReg, temp, shift_value);
+    as_or(dest.low, dest.low, SecondScratchReg);
+
+    bind(&done);
+}
+
+
 // ===============================================================
 // Branch functions
 
