@@ -50,6 +50,7 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitCompareI64AndBranch(LCompareI64AndBranch* lir);
     void visitShiftI64(LShiftI64* ins);
     void visitBitOpI64(LBitOpI64* lir);
+    void visitRotateI64(LRotateI64* lir);
 
 
     // Out of line visitors.
