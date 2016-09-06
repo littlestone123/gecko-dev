@@ -141,6 +141,14 @@ MacroAssembler::add64(Imm32 imm, Register64 dest)
 }
 
 void
+MacroAssembler::add64(Imm64 imm, Register64 dest)
+{
+    MOZ_ASSERT(dest.reg != ScratchRegister);
+    mov(ImmWord(imm.value), ScratchRegister);
+    ma_daddu(dest.reg, ScratchRegister);
+}
+
+void
 MacroAssembler::subPtr(Register src, Register dest)
 {
     as_dsubu(dest, dest, src);
