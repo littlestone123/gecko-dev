@@ -184,6 +184,21 @@ MacroAssembler::mul64(Imm64 imm, const Register64& dest)
 }
 
 void
+MacroAssembler::mul64(Imm64 imm, const Register64& dest, Register temp)
+{
+    MOZ_ASSERT(temp == InvalidReg);
+    mul64(imm, dest);
+}
+
+void
+MacroAssembler::mul64(const Register64& src, const Register64& dest, Register temp)
+{
+    MOZ_ASSERT(temp == InvalidReg);
+    as_dmultu(dest.reg, src.reg);
+    as_mflo(dest.reg);
+}
+
+void
 MacroAssembler::mulBy3(Register src, Register dest)
 {
     as_daddu(dest, src, src);
@@ -197,6 +212,12 @@ MacroAssembler::inc64(AbsoluteAddress dest)
     as_ld(SecondScratchReg, ScratchRegister, 0);
     as_daddiu(SecondScratchReg, SecondScratchReg, 1);
     as_sd(SecondScratchReg, ScratchRegister, 0);
+}
+
+void
+MacroAssembler::neg64(Register64 reg)
+{
+    as_dsubu(reg.reg, zero, reg.reg);
 }
 
 // ===============================================================
