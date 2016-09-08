@@ -46,6 +46,20 @@ class LUnboxFloatingPoint : public LUnbox
     }
 };
 
+class LWasmTruncateToInt64 : public LInstructionHelper<1, 1, 0>
+{
+  public:
+    LIR_HEADER(WasmTruncateToInt64);
+
+    LWasmTruncateToInt64(const LAllocation& in) {
+        setOperand(0, in);
+    }
+
+    MWasmTruncateToInt64* mir() const {
+        return mir_->toWasmTruncateToInt64();
+    }
+};
+
 } // namespace jit
 } // namespace js
 
