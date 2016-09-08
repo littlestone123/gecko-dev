@@ -75,16 +75,30 @@ MacroAssemblerMIPS64Compat::convertUInt32ToDouble(Register src, FloatRegister de
 }
 
 void
-MacroAssemblerMIPS64Compat::convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest)
+MacroAssemblerMIPS64Compat::convertInt64ToDouble(Register src, FloatRegister dest)
+{
+    as_dmtc1(src, dest);
+    as_cvtdl(dest, dest);
+}
+
+void
+MacroAssemblerMIPS64Compat::convertInt64ToFloat32(Register src, FloatRegister dest)
+{
+    as_dmtc1(src, dest);
+    as_cvtsl(dest, dest);
+}
+
+void
+MacroAssemblerMIPS64Compat::convertUInt64ToDouble(Register src, FloatRegister dest)
 {
     Label positive, done;
-    ma_b(src.reg, src.reg, &positive, NotSigned, ShortJump);
+    ma_b(src, src, &positive, NotSigned, ShortJump);
 
-    MOZ_ASSERT(src.reg != ScratchRegister);
-    MOZ_ASSERT(src.reg != SecondScratchReg);
+    MOZ_ASSERT(src!= ScratchRegister);
+    MOZ_ASSERT(src!= SecondScratchReg);
 
-    ma_and(ScratchRegister, src.reg, Imm32(1));
-    ma_dsrl(SecondScratchReg, src.reg, Imm32(1));
+    ma_and(ScratchRegister, src, Imm32(1));
+    ma_dsrl(SecondScratchReg, src, Imm32(1));
     ma_or(ScratchRegister, SecondScratchReg);
     as_dmtc1(ScratchRegister, dest);
     as_cvtdl(dest, dest);
@@ -92,10 +106,40 @@ MacroAssemblerMIPS64Compat::convertUInt64ToDouble(Register64 src, Register temp,
     ma_b(&done, ShortJump);
 
     bind(&positive);
-    as_dmtc1(src.reg, dest);
+    as_dmtc1(src, dest);
     as_cvtdl(dest, dest);
 
     bind(&done);
+}
+
+void
+MacroAssemblerMIPS64Compat::convertUInt64ToFloat32(Register src, FloatRegister dest)
+{
+    Label positive, done;
+    ma_b(src, src, &positive, NotSigned, ShortJump);
+
+    MOZ_ASSERT(src!= ScratchRegister);
+    MOZ_ASSERT(src!= SecondScratchReg);
+
+    ma_and(ScratchRegister, src, Imm32(1));
+    ma_dsrl(SecondScratchReg, src, Imm32(1));
+    ma_or(ScratchRegister, SecondScratchReg);
+    as_dmtc1(ScratchRegister, dest);
+    as_cvtsl(dest, dest);
+    asMasm().addFloat32(dest, dest);
+    ma_b(&done, ShortJump);
+
+    bind(&positive);
+    as_dmtc1(src, dest);
+    as_cvtsl(dest, dest);
+
+    bind(&done);
+}
+
+void
+MacroAssemblerMIPS64Compat::convertUInt64ToDouble(Register64 src, Register temp, FloatRegister dest)
+{
+    convertUInt64ToDouble(src.reg, dest);
 }
 
 void
