@@ -71,6 +71,8 @@ class LIRGeneratorMIPSShared : public LIRGeneratorShared
     void lowerMulI(MMul* mul, MDefinition* lhs, MDefinition* rhs);
     void lowerUDiv(MDiv* div);
     void lowerUMod(MMod* mod);
+    void lowerUDivI64(MDiv* div);
+    void lowerUModI64(MMod* mod);
     void visitPowHalf(MPowHalf* ins);
     void visitAsmJSNeg(MAsmJSNeg* ins);
     void visitWasmBoundsCheck(MWasmBoundsCheck* ins);

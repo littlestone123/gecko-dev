@@ -228,13 +228,27 @@ LIRGeneratorMIPSShared::lowerModI(MMod* mod)
 void
 LIRGeneratorMIPSShared::lowerDivI64(MDiv* div)
 {
-    MOZ_CRASH("NYI");
+    if (div->isUnsigned()) {
+        lowerUDivI64(div);
+        return;
+    }
+
+    LDivOrModI64* lir = new(alloc()) LDivOrModI64(useRegister(div->lhs()), useRegister(div->rhs()),
+                                                  temp());
+    defineInt64(lir, div);
 }
 
 void
 LIRGeneratorMIPSShared::lowerModI64(MMod* mod)
 {
-    MOZ_CRASH("NYI");
+    if (mod->isUnsigned()) {
+        lowerUModI64(mod);
+        return;
+    }
+
+    LDivOrModI64* lir = new(alloc()) LDivOrModI64(useRegister(mod->lhs()), useRegister(mod->rhs()),
+                                                  temp());
+    defineInt64(lir, mod);
 }
 
 void
@@ -411,6 +425,24 @@ LIRGeneratorMIPSShared::lowerUMod(MMod* mod)
         assignSnapshot(lir, Bailout_DoubleOutput);
 
     define(lir, mod);
+}
+
+void
+LIRGeneratorMIPSShared::lowerUDivI64(MDiv* div)
+{
+    LUDivOrModI64* lir = new(alloc()) LUDivOrModI64(useRegister(div->lhs()),
+                                                    useRegister(div->rhs()),
+                                                    temp());
+    defineInt64(lir, div);
+}
+
+void
+LIRGeneratorMIPSShared::lowerUModI64(MMod* mod)
+{
+    LUDivOrModI64* lir = new(alloc()) LUDivOrModI64(useRegister(mod->lhs()),
+                                                    useRegister(mod->rhs()),
+                                                    temp());
+    defineInt64(lir, mod);
 }
 
 void

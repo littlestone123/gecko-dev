@@ -2363,6 +2363,42 @@ CodeGeneratorMIPSShared::visitAsmReinterpret(LAsmReinterpret* lir)
 }
 
 void
+CodeGeneratorMIPSShared::visitDivOrModI64(LDivOrModI64* lir)
+{
+    Register lhs = ToRegister(lir->lhs());
+    Register rhs = ToRegister(lir->rhs());
+    Register output = ToRegister(lir->output());
+
+    Label done;
+
+    // Handle divide by zero.
+    if (lir->canBeDivideByZero())
+        masm.ma_b(rhs, rhs, wasm::JumpTarget::IntegerDivideByZero, Assembler::Zero);
+
+    // Handle an integer overflow exception from INT64_MIN / -1.
+    if (lir->canBeNegativeOverflow()) {
+        Label notmin;
+        masm.branchPtr(Assembler::NotEqual, lhs, ImmWord(INT64_MIN), &notmin);
+        masm.branchPtr(Assembler::NotEqual, rhs, ImmWord(-1), &notmin);
+        if (lir->mir()->isMod())
+            masm.ma_xor(output, output);
+        else
+            masm.jump(wasm::JumpTarget::IntegerOverflow);
+        masm.jump(&done);
+        masm.bind(&notmin);
+    }
+
+    masm.as_ddiv(lhs, rhs);
+
+    if (lir->mir()->isMod())
+        masm.as_mfhi(output);
+    else
+        masm.as_mflo(output);
+
+    masm.bind(&done);
+}
+
+void
 CodeGeneratorMIPSShared::visitUDivOrMod(LUDivOrMod* ins)
 {
     Register lhs = ToRegister(ins->lhs());
@@ -2401,6 +2437,29 @@ CodeGeneratorMIPSShared::visitUDivOrMod(LUDivOrMod* ins)
 
     if (!ins->mir()->isTruncated())
         bailoutCmp32(Assembler::LessThan, output, Imm32(0), ins->snapshot());
+
+    masm.bind(&done);
+}
+
+void
+CodeGeneratorMIPSShared::visitUDivOrModI64(LUDivOrModI64* lir)
+{
+    Register lhs = ToRegister(lir->lhs());
+    Register rhs = ToRegister(lir->rhs());
+    Register output = ToRegister(lir->output());
+
+    Label done;
+
+    // Prevent divide by zero.
+    if (lir->canBeDivideByZero())
+        masm.ma_b(rhs, rhs, wasm::JumpTarget::IntegerDivideByZero, Assembler::Zero);
+
+    masm.as_ddivu(lhs, rhs);
+
+    if (lir->mir()->isMod())
+        masm.as_mfhi(output);
+    else
+        masm.as_mflo(output);
 
     masm.bind(&done);
 }
