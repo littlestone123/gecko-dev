@@ -47,6 +47,7 @@ class CodeGeneratorMIPS64 : public CodeGeneratorMIPSShared
     void visitCompareI64(LCompareI64* lir);
     void visitCompareI64AndBranch(LCompareI64AndBranch* lir);
     void visitWasmLoadI64(LWasmLoadI64* lir);
+    void visitWasmStoreI64(LWasmStoreI64* ins);
     void visitAsmSelectI64(LAsmSelectI64* ins);
     void visitAsmReinterpretFromI64(LAsmReinterpretFromI64* lir);
     void visitAsmReinterpretToI64(LAsmReinterpretToI64* lir);
