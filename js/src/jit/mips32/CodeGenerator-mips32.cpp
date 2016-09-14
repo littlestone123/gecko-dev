@@ -46,6 +46,12 @@ class js::jit::OutOfLineTableSwitch : public OutOfLineCodeBase<CodeGeneratorMIPS
     }
 };
 
+Register64
+CodeGeneratorMIPS::ToOperandOrRegister64(const LInt64Allocation input)
+{
+    return ToRegister64(input);
+}
+
 void
 CodeGeneratorMIPS::visitOutOfLineBailout(OutOfLineBailout* ool)
 {

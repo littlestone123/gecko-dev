@@ -33,6 +33,21 @@ ABIArgGenerator::next(MIRType type)
             current_ = ABIArg(usedArgSlots_ * sizeof(intptr_t));
         usedArgSlots_++;
         break;
+      case MIRType::Int64:
+        if (!usedArgSlots_) {
+            current_ = ABIArg(a0, a1);
+            usedArgSlots_ = 2;
+        } else if (usedArgSlots_ <= 2) {
+            current_ = ABIArg(a2, a3);
+            usedArgSlots_ = 4;
+        } else {
+            if (usedArgSlots_ < NumIntArgRegs)
+                usedArgSlots_ = NumIntArgRegs;
+            usedArgSlots_ += usedArgSlots_ % 2;
+            current_ = ABIArg(usedArgSlots_ * sizeof(intptr_t));
+            usedArgSlots_ += 2;
+        }
+        break;
       case MIRType::Float32:
         if (!usedArgSlots_) {
             current_ = ABIArg(f12.asSingle());
