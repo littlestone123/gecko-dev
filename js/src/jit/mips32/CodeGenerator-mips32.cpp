@@ -326,3 +326,15 @@ CodeGeneratorMIPS::visitWrapInt64ToInt32(LWrapInt64ToInt32* lir)
     else
         masm.move32(ToRegister(input.high()), output);
 }
+
+void
+CodeGeneratorMIPS::visitExtendInt32ToInt64(LExtendInt32ToInt64* lir)
+{
+    Register64 output = ToOutRegister64(lir);
+    MOZ_ASSERT(ToRegister(lir->input()) == output.low);
+
+    if (lir->mir()->isUnsigned())
+        masm.move32(Imm32(0), output.high);
+    else
+        masm.ma_sra(output.high, output.low, Imm32(31));
+}
