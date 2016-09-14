@@ -134,6 +134,27 @@ LIRGeneratorMIPS::lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PI
 }
 
 void
+LIRGeneratorMIPS::lowerForMulInt64(LMulI64* ins, MMul* mir, MDefinition* lhs, MDefinition* rhs)
+{
+    bool constantNeedTemp = true;
+    if (rhs->isConstant()) {
+        int64_t constant = rhs->toConstant()->toInt64();
+        int32_t shift = mozilla::FloorLog2(constant);
+        //See special cases in CodeGeneratorMIPS::visitMulI64
+        if (constant >= -1 && constant <= 2)
+            constantNeedTemp = false;
+        if (int64_t(1) << shift == constant)
+            constantNeedTemp = false;
+     }
+
+    ins->setInt64Operand(0, useInt64Register(lhs));
+    ins->setInt64Operand(INT64_PIECES, useInt64OrConstant(rhs));
+    if (constantNeedTemp)
+        ins->setTemp(0, temp());
+    defineInt64(ins, mir);
+}
+
+void
 LIRGeneratorMIPS::defineUntypedPhi(MPhi* phi, size_t lirIndex)
 {
     LPhi* type = current->getPhi(lirIndex + VREG_TYPE_OFFSET);

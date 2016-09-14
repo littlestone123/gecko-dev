@@ -372,3 +372,45 @@ CodeGeneratorMIPS::visitSubI64(LSubI64* lir)
 
     masm.sub64(ToOperandOrRegister64(rhs), output);
 }
+
+void
+CodeGeneratorMIPS::visitMulI64(LMulI64* lir)
+{
+    const LInt64Allocation lhs = lir->getInt64Operand(LMulI64::Lhs);
+    const LInt64Allocation rhs = lir->getInt64Operand(LMulI64::Rhs);
+    Register64 output = ToOutRegister64(lir);
+
+    masm.move64(ToRegister64(lhs), output);
+
+    if (IsConstant(rhs)) {
+        int64_t constant = ToInt64(rhs);
+        switch (constant) {
+          case -1:
+            masm.neg64(output);
+            return;
+          case 0:
+            masm.xor64(output, output);
+            return;
+          case 1:
+            // nop
+            return;
+          case 2:
+            masm.add64(ToRegister64(lhs), output);
+            return;
+          default:
+            if (constant > 0) {
+                // Use shift if constant is power of 2.
+                int32_t shift = mozilla::FloorLog2(constant);
+                if (int64_t(1) << shift == constant) {
+                    masm.lshift64(Imm32(shift), output);
+                    return;
+                }
+            }
+            Register temp = ToTempRegisterOrInvalid(lir->temp());
+            masm.mul64(Imm64(constant), output, temp);
+        }
+    }else{
+        Register temp = ToTempRegisterOrInvalid(lir->temp());
+        masm.mul64(ToOperandOrRegister64(rhs), output, temp);
+    }
+}
