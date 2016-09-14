@@ -509,3 +509,55 @@ Assembler::UpdateBoundsCheck(uint8_t* patchAt, uint32_t heapLength)
     // Replace with new value
     Assembler::UpdateLuiOriValue(i0, i1, heapLength);
 }
+
+/*Assembler::Condition
+Assembler::InvertCondition(Condition cond)
+{
+    const uint32_t ConditionInversionBit = 0x10000000;
+    return Condition(ConditionInversionBit ^ cond);
+}*/
+
+Assembler::Condition
+Assembler::UnsignedCondition(Condition cond)
+{
+    switch (cond) {
+      case Zero:
+      case NonZero:
+        return cond;
+      case LessThan:
+      case Below:
+        return Below;
+      case LessThanOrEqual:
+      case BelowOrEqual:
+        return BelowOrEqual;
+      case GreaterThan:
+      case Above:
+        return Above;
+      case AboveOrEqual:
+      case GreaterThanOrEqual:
+        return AboveOrEqual;
+      default:
+        MOZ_CRASH("unexpected condition");
+    }
+}
+
+Assembler::Condition
+Assembler::ConditionWithoutEqual(Condition cond)
+{
+    switch (cond) {
+      case LessThan:
+      case LessThanOrEqual:
+        return LessThan;
+      case Below:
+      case BelowOrEqual:
+        return Below;
+      case GreaterThan:
+      case GreaterThanOrEqual:
+        return GreaterThan;
+      case Above:
+      case AboveOrEqual:
+        return Above;
+      default:
+        MOZ_CRASH("unexpected condition");
+    }
+}
