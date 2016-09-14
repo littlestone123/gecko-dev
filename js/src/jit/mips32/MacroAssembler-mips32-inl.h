@@ -137,8 +137,17 @@ MacroAssembler::add64(Register64 src, Register64 dest)
 void
 MacroAssembler::add64(Imm32 imm, Register64 dest)
 {
-    as_addiu(dest.low, dest.low, imm.value);
+    ma_addu(dest.low, dest.low, imm);
     as_sltiu(ScratchRegister, dest.low, imm.value);
+    as_addu(dest.high, dest.high, ScratchRegister);
+}
+
+void
+MacroAssembler::add64(Imm64 imm, Register64 dest)
+{
+    ma_addu(dest.low, dest.low, Imm32(imm.value & LOW_32_MASK));
+    as_sltiu(ScratchRegister, dest.low, imm.value & LOW_32_MASK);
+    ma_addu(dest.high, dest.high, Imm32((imm.value >> 32) & LOW_32_MASK));
     as_addu(dest.high, dest.high, ScratchRegister);
 }
 
@@ -152,6 +161,24 @@ void
 MacroAssembler::subPtr(Imm32 imm, Register dest)
 {
     ma_subu(dest, dest, imm);
+}
+
+void
+MacroAssembler::sub64(Register64 src, Register64 dest)
+{
+    as_sltu(ScratchRegister, dest.low, src.low);
+    as_subu(dest.high, dest.high, ScratchRegister);
+    as_subu(dest.low, dest.low, src.low);
+    as_subu(dest.high, dest.high, src.high);
+}
+
+void
+MacroAssembler::sub64(Imm64 imm, Register64 dest)
+{
+    as_sltiu(ScratchRegister, dest.low, imm.value & LOW_32_MASK);
+    as_subu(dest.high, dest.high, ScratchRegister);
+    ma_subu(dest.low, dest.low, imm.firstHalf());
+    ma_subu(dest.high, dest.high, imm.secondHalf());
 }
 
 void

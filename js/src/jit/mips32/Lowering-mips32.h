@@ -28,6 +28,9 @@ class LIRGeneratorMIPS : public LIRGeneratorMIPSShared
         return LDefinition::BogusTemp();
     }
 
+    void lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
+                          MDefinition* mir, MDefinition* lhs, MDefinition* rhs);
+
     void lowerUntypedPhiInput(MPhi* phi, uint32_t inputPosition, LBlock* block, size_t lirIndex);
     void defineUntypedPhi(MPhi* phi, size_t lirIndex);
 
