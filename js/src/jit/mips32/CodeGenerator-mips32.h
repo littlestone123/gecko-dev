@@ -51,6 +51,7 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitShiftI64(LShiftI64* ins);
     void visitBitOpI64(LBitOpI64* lir);
     void visitRotateI64(LRotateI64* lir);
+    void visitAsmJSPassStackArgI64(LAsmJSPassStackArgI64* lir);
 
 
     // Out of line visitors.
