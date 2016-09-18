@@ -611,3 +611,36 @@ CodeGeneratorMIPS::visitShiftI64(LShiftI64* lir)
         MOZ_CRASH("Unexpected shift op");
     }
 }
+
+void
+CodeGeneratorMIPS::visitBitOpI64(LBitOpI64* lir)
+{
+    const LInt64Allocation lhs = lir->getInt64Operand(LBitOpI64::Lhs);
+    const LInt64Allocation rhs = lir->getInt64Operand(LBitOpI64::Rhs);
+    Register64 output = ToOutRegister64(lir);
+
+    masm.move64(ToRegister64(lhs), output);
+
+    switch (lir->bitop()) {
+      case JSOP_BITOR:
+        if (IsConstant(rhs))
+            masm.or64(Imm64(ToInt64(rhs)), output);
+        else
+            masm.or64(ToOperandOrRegister64(rhs), output);
+        break;
+      case JSOP_BITXOR:
+        if (IsConstant(rhs))
+            masm.xor64(Imm64(ToInt64(rhs)), output);
+        else
+            masm.xor64(ToOperandOrRegister64(rhs), output);
+        break;
+      case JSOP_BITAND:
+        if (IsConstant(rhs))
+            masm.and64(Imm64(ToInt64(rhs)), output);
+        else
+            masm.and64(ToOperandOrRegister64(rhs), output);
+        break;
+      default:
+            MOZ_CRASH("unexpected binary opcode");
+    }
+}
