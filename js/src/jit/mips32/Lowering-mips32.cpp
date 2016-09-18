@@ -314,3 +314,16 @@ template void LIRGeneratorMIPS::lowerForShiftInt64(
 template void LIRGeneratorMIPS::lowerForShiftInt64(
             LInstructionHelper<INT64_PIECES, INT64_PIECES+1, 1>* ins, MDefinition* mir,
                 MDefinition* lhs, MDefinition* rhs);
+
+void
+LIRGeneratorMIPS::visitAsmSelect(MAsmSelect* ins)
+{
+    if (ins->type() == MIRType::Int64) {
+        auto* lir = new(alloc()) LAsmSelectI64(useInt64Register(ins->trueExpr()), useInt64Register(ins->falseExpr()), useRegister(ins->condExpr()));
+        defineInt64(lir, ins);
+        return;
+    }
+
+    auto* lir = new(alloc()) LAsmSelect(useRegisterAtStart(ins->trueExpr()), useRegister(ins->falseExpr()), useRegister(ins->condExpr()));
+    defineReuseInput(lir, ins, LAsmSelect::TrueExprIndex);
+}
