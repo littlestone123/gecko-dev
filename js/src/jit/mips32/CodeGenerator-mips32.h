@@ -46,6 +46,8 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitMulI64(LMulI64* lir);
     void visitDivOrModI64(LDivOrModI64* lir);
     void visitUDivOrModI64(LUDivOrModI64* lir);
+    void visitCompareI64(LCompareI64* lir);
+    void visitCompareI64AndBranch(LCompareI64AndBranch* lir);
 
 
     // Out of line visitors.
