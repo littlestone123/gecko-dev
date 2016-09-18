@@ -294,3 +294,23 @@ LIRGeneratorMIPS::lowerUModI64(MMod* mod)
     LUDivOrModI64* lir = new(alloc()) LUDivOrModI64(useInt64RegisterAtStart(mod->lhs()), useInt64RegisterAtStart(mod->rhs()));
     defineReturn(lir, mod);
 }
+
+template<size_t Temps>
+void
+LIRGeneratorMIPS::lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, Temps>* ins,
+                                     MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
+{
+    if (mir->isRotate() && !rhs->isConstant())
+        ins->setTemp(0, temp());
+
+    ins->setInt64Operand(0, useInt64Register(lhs));
+    ins->setOperand(INT64_PIECES, useRegisterOrConstant(rhs));
+    defineInt64(ins, mir);
+}
+
+template void LIRGeneratorMIPS::lowerForShiftInt64(
+            LInstructionHelper<INT64_PIECES, INT64_PIECES+1, 0>* ins, MDefinition* mir,
+                MDefinition* lhs, MDefinition* rhs);
+template void LIRGeneratorMIPS::lowerForShiftInt64(
+            LInstructionHelper<INT64_PIECES, INT64_PIECES+1, 1>* ins, MDefinition* mir,
+                MDefinition* lhs, MDefinition* rhs);

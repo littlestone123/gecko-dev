@@ -38,6 +38,10 @@ class LIRGeneratorMIPS : public LIRGeneratorMIPSShared
     void lowerInt64PhiInput(MPhi* phi, uint32_t inputPosition, LBlock* block, size_t lirIndex);
     void defineInt64Phi(MPhi* phi, size_t lirIndex);
 
+    template<size_t Temps>
+    void lowerForShiftInt64(LInstructionHelper<INT64_PIECES, INT64_PIECES + 1, Temps>* ins,
+                            MDefinition* mir, MDefinition* lhs, MDefinition* rhs);
+
     void lowerTruncateDToInt32(MTruncateToInt32* ins);
     void lowerTruncateFToInt32(MTruncateToInt32* ins);
     void lowerUDivI64(MDiv* div);
