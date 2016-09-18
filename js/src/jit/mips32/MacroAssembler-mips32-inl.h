@@ -123,6 +123,49 @@ MacroAssembler::xorPtr(Imm32 imm, Register dest)
     ma_xor(dest, imm);
 }
 
+void
+MacroAssembler::popcnt32(Register input, Register output, Register tmp)
+{
+    MOZ_ASSERT(tmp != InvalidReg);
+
+    ma_move(output, input);
+    ma_sra(tmp, input, Imm32(1));
+    ma_and(tmp, Imm32(0x55555555));
+    ma_subu(output, tmp);
+    ma_sra(tmp, output, Imm32(2));
+    ma_and(output, Imm32(0x33333333));
+    ma_and(tmp, Imm32(0x33333333));
+    ma_addu(output, tmp);
+    ma_srl(tmp, output, Imm32(4));
+    ma_addu(output, tmp);
+    ma_and(output, Imm32(0xF0F0F0F));
+    ma_sll(tmp, output, Imm32(8));
+    ma_addu(output, tmp);
+    ma_sll(tmp, output, Imm32(16));
+    ma_addu(output, tmp);
+    ma_sra(output, output, Imm32(24));
+}
+
+void
+MacroAssembler::popcnt64(Register64 src, Register64 dest, Register tmp)
+{
+    MOZ_ASSERT(dest.low != tmp);
+    MOZ_ASSERT(dest.high != tmp);
+    MOZ_ASSERT(dest.low != dest.high);
+
+    if (dest.low != src.high) {
+        popcnt32(src.low, dest.low, tmp);
+        popcnt32(src.high, dest.high, tmp);
+    } else {
+        MOZ_ASSERT(dest.high != src.high);
+        popcnt32(src.low, dest.high, tmp);
+        popcnt32(src.high, dest.low, tmp);
+    }
+
+    ma_addu(dest.low, dest.high);
+    move32(Imm32(0), dest.high);
+}
+
 // ===============================================================
 // Arithmetic functions
 

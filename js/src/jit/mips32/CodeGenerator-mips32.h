@@ -55,6 +55,7 @@ class CodeGeneratorMIPS : public CodeGeneratorMIPSShared
     void visitAsmSelectI64(LAsmSelectI64* lir);
     void visitAsmReinterpretFromI64(LAsmReinterpretFromI64* lir);
     void visitAsmReinterpretToI64(LAsmReinterpretToI64* lir);
+    void visitPopcntI64(LPopcntI64* ins);
 
 
     // Out of line visitors.
