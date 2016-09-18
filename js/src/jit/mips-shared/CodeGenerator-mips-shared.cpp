@@ -1680,22 +1680,22 @@ void
 CodeGeneratorMIPSShared::visitWasmBoundsCheck(LWasmBoundsCheck* ins)
 {
     MWasmBoundsCheck* mir = ins->mir();
-
     uint32_t offset = mir->offset();
     MOZ_ASSERT(offset <= INT32_MAX);
 
-    uint32_t endOffset = mir->endOffset();
-    Register ptr = ToRegister(ins->ptr());
+    if (!mir->isRedundant()) {
+        uint32_t endOffset = mir->endOffset();
+        Register ptr = ToRegister(ins->ptr());
+        masm.move32(Imm32(endOffset), SecondScratchReg);
+        masm.addPtr(ptr, SecondScratchReg);
 
-    masm.move32(Imm32(endOffset), SecondScratchReg);
-    masm.addPtr(ptr, SecondScratchReg);
+        // Detect unsigned overflow.
+        masm.ma_b(SecondScratchReg, ptr, wasm::JumpTarget::OutOfBounds, Assembler::Below);
 
-    // Detect unsigned overflow.
-    masm.ma_b(SecondScratchReg, ptr, wasm::JumpTarget::OutOfBounds, Assembler::LessThan);
-
-    BufferOffset bo = masm.ma_BoundsCheck(ScratchRegister);
-    masm.ma_b(SecondScratchReg, ScratchRegister, wasm::JumpTarget::OutOfBounds, Assembler::Above);
-    masm.append(wasm::BoundsCheck(bo.getOffset()));
+        BufferOffset bo = masm.ma_BoundsCheck(ScratchRegister);
+        masm.ma_b(SecondScratchReg, ScratchRegister, wasm::JumpTarget::OutOfBounds, Assembler::Above);
+        masm.append(wasm::BoundsCheck(bo.getOffset()));
+    }
 }
 
 void

@@ -37,8 +37,8 @@ get_mips_flags()
     fclose(fp);
     if (strstr(buf, "FPU"))
         flags |= HWCAP_FPU;
-    if (strstr(buf, "Loongson"))
-        flags |= HWCAP_LOONGSON;
+   // if (strstr(buf, "Loongson"))
+       // flags |= HWCAP_LOONGSON;
 # endif
 #endif // JS_SIMULATOR_MIPS32 || JS_SIMULATOR_MIPS64
     return flags;
