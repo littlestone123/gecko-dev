@@ -124,6 +124,41 @@ MacroAssembler::xorPtr(Imm32 imm, Register dest)
 }
 
 void
+MacroAssembler::clz64(Register64 src, Register dest)
+{
+    Label done, low;
+    ScratchRegisterScope scratch(*this);
+
+    ma_b(src.high, Imm32(0), &low, Equal);
+    as_clz(scratch, src.high);
+    ma_move(dest, scratch);
+    ma_b(&done);
+
+    bind(&low);
+    as_clz(dest, src.low);
+    ma_addu(dest, Imm32(32));
+
+    bind(&done);
+}
+
+void
+MacroAssembler::ctz64(Register64 src, Register dest)
+{
+    Label done, high;
+
+    ma_b(src.low, Imm32(0), &high, Equal);
+
+    ma_ctz(dest, src.low);
+    ma_b(&done);
+
+    bind(&high);
+    ma_ctz(dest, src.high);
+    ma_addu(dest, Imm32(32));
+
+    bind(&done);
+}
+
+void
 MacroAssembler::popcnt32(Register input, Register output, Register tmp)
 {
     MOZ_ASSERT(tmp != InvalidReg);
