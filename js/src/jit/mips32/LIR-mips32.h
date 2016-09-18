@@ -149,6 +149,16 @@ class LWasmTruncateToInt64 : public LCallInstructionHelper<INT64_PIECES, 1, 0>
         }
 };
 
+class LInt64ToFloatingPoint : public LCallInstructionHelper<1, INT64_PIECES, 0>
+{
+    public:
+        LIR_HEADER(Int64ToFloatingPoint);
+
+        MInt64ToFloatingPoint* mir() const {
+            return mir_->toInt64ToFloatingPoint();
+        }
+};
+
 } // namespace jit
 } // namespace js
 

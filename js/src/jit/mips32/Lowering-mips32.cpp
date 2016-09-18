@@ -336,3 +336,13 @@ LIRGeneratorMIPS::visitWasmTruncateToInt64(MWasmTruncateToInt64* ins)
 
     defineReturn(new(alloc()) LWasmTruncateToInt64(useRegisterAtStart(opd)), ins);
 }
+
+void
+LIRGeneratorMIPS::visitInt64ToFloatingPoint(MInt64ToFloatingPoint* ins)
+{
+    MOZ_ASSERT(ins->type() == MIRType::Double || ins->type() == MIRType::Float32);
+
+    auto lir = new(alloc()) LInt64ToFloatingPoint();
+    lir->setInt64Operand(0, useInt64RegisterAtStart(ins->input()));
+    defineReturn(lir, ins);
+}
