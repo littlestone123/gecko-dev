@@ -125,6 +125,15 @@ LIRGeneratorMIPS::visitReturn(MReturn* ret)
 }
 
 void
+LIRGeneratorMIPS::lowerForALUInt64(LInstructionHelper<INT64_PIECES, 2 * INT64_PIECES, 0>* ins,
+                                  MDefinition* mir, MDefinition* lhs, MDefinition* rhs)
+{
+    ins->setInt64Operand(0, useInt64Register(lhs));
+    ins->setInt64Operand(INT64_PIECES, useInt64OrConstant(rhs));
+    defineInt64(ins, mir);
+}
+
+void
 LIRGeneratorMIPS::defineUntypedPhi(MPhi* phi, size_t lirIndex)
 {
     LPhi* type = current->getPhi(lirIndex + VREG_TYPE_OFFSET);
